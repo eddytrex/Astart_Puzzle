@@ -66,8 +66,8 @@ func (this *Juego)Init2(){
   this.fila1Objetivo[l]=-1
   rand.Seed(time.Now().UTC().UnixNano())
   //vector:=make([]int,12,12)    
-  f1:=[4]int{9,10,11,8}
-  f2:=[8]int{1,2,3,4,5,6,7,-1}
+  f1:=[4]int{9,10,11,4}
+  f2:=[8]int{1,2,3,-1,5,6,7,8}
   this.fila1=f1;
   this.fila2=f2;
   fmt.Println("Circulo 1",this.fila1)
@@ -332,48 +332,66 @@ func (this *Nodo) addChild(estado Juego)bool{
   return true
 }
 
-func (Raiz *Nodo)AStar(v EstadosVisitados,deep int){
-  
-  if(Raiz.Estado.heuristica!=0){
-   
+func (Raiz *Nodo)AStar(v *EstadosVisitados,deep int)bool{  
+  //fmt.Println("h",Raiz.Estado.heuristica)
+  //fmt.Println("|v|",len(v.ERecorridos))
+  if(Raiz.Estado.heuristica!=0){    
   Ordenados:=Raiz.Estado.Ordenar(Raiz.Estado.posiblesEstados())
   //Ordenados:=Raiz.Estado.posiblesEstados()
-    
   for i:=0;i<len(Ordenados);i++{        
     if(!v.Buscar(Ordenados[i])){      
       Raiz.addChild(Ordenados[i])      
-      v.Agregar(Ordenados[i])
-      fmt.Println(Ordenados[i].heuristica)
-      
+      v.Agregar(Ordenados[i])     
+      if(Ordenados[i].heuristica==0){ 
+	fmt.Println(Ordenados[i].fila1,Ordenados[i].fila2,"fuu",Ordenados[i].heuristica);
+	fmt.Println(":) suerte") 
+	return true;	
+      }
+      fmt.Println(Ordenados[i].fila1,Ordenados[i].fila2,"fuu",Ordenados[i].heuristica);
+    }else{
       
     }
   }
-  
+  var bandera bool
   for i:=0;i<len(Raiz.Hijos);i++{
     if(Raiz.Hijos[i].Nivel<=deep){
-    Raiz.Hijos[i].AStar(v,deep)
+     bandera=Raiz.Hijos[i].AStar(v,deep)
+     if(bandera==true){
+       return true
+    }
     }
   }
   //fmt.Println(":/",Ordenados)
+  }else{
+    return true
   }
+  return false
 }
 
 type EstadosVisitados struct{
   ERecorridos []Juego  
 }
 
-func (this *EstadosVisitados)Buscar(Estado Juego)bool{
-  var res bool;
-  res=false;
-  for i:=0;i<len(this.ERecorridos);i++{
-    if(this.ERecorridos[i].fila1==Estado.fila1 &&this.ERecorridos[i].fila2==Estado.fila2){
-      res=true
+func (this *EstadosVisitados)Buscar(Estado Juego)bool{    
+  var i int
+  for i=0;i<len(this.ERecorridos);i++{    
+    temp:=this.ERecorridos[i];
+    
+    v:=temp.fila1==Estado.fila1
+    v1:=temp.fila2==Estado.fila2
+    if(v&&v1){
+	return true
     }
     
+    
+    
   }
-  return res
+  return false
 }
+  
 func (this *EstadosVisitados)Agregar(Estado Juego){
+  
+  //fmt.Println("ERecorridos",len(this.ERecorridos),Estado)
   this.ERecorridos=append(this.ERecorridos,Estado)
 }
 
@@ -383,7 +401,7 @@ func main(){
   var Raiz Nodo
   var EV EstadosVisitados
     
-  prueba.Init()
+  prueba.Init2()
   prueba.tipoHeuristica=1
   prueba.HeuristicaJuego()
   
@@ -392,7 +410,9 @@ func main(){
   Raiz.Hijos=nil
   EV.Agregar(prueba)
   
-  Raiz.AStar(EV,100)
+  //fmt.Println("firl",len(EV.ERecorridos))
+  
+  Raiz.AStar(&EV,10)
   
   fmt.Println("--->>",len(Raiz.Hijos))  
 }
