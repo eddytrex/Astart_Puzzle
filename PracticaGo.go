@@ -227,6 +227,7 @@ func (this *Juego) posiblesEstados()[]Juego{
       }
       heut:=newState.heuristica-this.HeuristicaPieza(-1)-this.HeuristicaPieza(this.GetValor(rf,pf))+newState.HeuristicaPieza(-1)+newState.HeuristicaPieza(newState.GetValor(r,p))
       newState.heuristica=heut;
+      //newState.HeuristicaJuego()
       //fmt.Println("H(t+1) ",heut)
       //fmt.Println("hola :)",newState.fila1,newState.fila2)
       //fmt.Println("recalc ",newState.HeuristicaJuego())
@@ -332,7 +333,7 @@ func (this *Nodo) addChild(estado Juego)bool{
   return true
 }
 
-func (Raiz *Nodo)AStar(v *EstadosVisitados,deep int)bool{  
+func (Raiz *Nodo)AStar(v *EstadosVisitados,deep int)(bool, []Juego){  
   
   /*s:="\t";
   for ni:=0;ni<Raiz.Nivel;ni++{
@@ -340,7 +341,7 @@ func (Raiz *Nodo)AStar(v *EstadosVisitados,deep int)bool{
   }*/
   
   //fmt.Println(s,".",Raiz.Estado.fila1,Raiz.Estado.fila2,"fuu",Raiz.Estado.heuristica)
-  fmt.Println(Raiz.Estado.fila1,Raiz.Estado.fila2,"fuu",Raiz.Estado.heuristica)
+  //fmt.Println(Raiz.Estado.fila1,Raiz.Estado.fila2,"fuu",Raiz.Estado.heuristica)
   
   
   if(Raiz.Estado.heuristica!=0){   
@@ -354,8 +355,13 @@ func (Raiz *Nodo)AStar(v *EstadosVisitados,deep int)bool{
 	//fmt.Println("->",len(Raiz.Hijos))
 	temp:=len(Raiz.Hijos)-1
 	if(Raiz.Hijos[temp].Nivel<=deep){
-	  b:=Raiz.Hijos[temp].AStar(v,deep)
-	  if(b){return b}
+	  b,res:=Raiz.Hijos[temp].AStar(v,deep)
+	  if(b){
+	    t:=make([]Juego,1,1)
+	    t[0]=Raiz.Hijos[temp].Estado
+	    res=append(t,res...)
+	    return b,res	    
+	  }
 	}
 	  
 	
@@ -374,10 +380,12 @@ func (Raiz *Nodo)AStar(v *EstadosVisitados,deep int)bool{
     }*/  
  
   }else{
-    return true
+    t:=make([]Juego,1,1)
+    t[0]=Raiz.Estado
+    return true,t
   }
-  
-  return false
+  t:=make([]Juego,1,1)
+  return false,t
 }
 
 type EstadosVisitados struct{
@@ -424,8 +432,13 @@ func main(){
   
   //fmt.Println("firl",len(EV.ERecorridos))
   
-  Raiz.AStar(&EV,12)
+  _,c:=Raiz.AStar(&EV,12)
   
+  
+  for i:=0;i<len(c);i++{
+    fmt.Println(c[i].fila1,c[i].fila2,c[i].heuristica)
+  }
+
   fmt.Println(" Hijos del nodo raiz",len(Raiz.Hijos))  
 }
 
