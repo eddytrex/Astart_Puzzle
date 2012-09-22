@@ -333,38 +333,50 @@ func (this *Nodo) addChild(estado Juego)bool{
 }
 
 func (Raiz *Nodo)AStar(v *EstadosVisitados,deep int)bool{  
-  //fmt.Println("h",Raiz.Estado.heuristica)
-  //fmt.Println("|v|",len(v.ERecorridos))
-  if(Raiz.Estado.heuristica!=0){    
+  
+  /*s:="\t";
+  for ni:=0;ni<Raiz.Nivel;ni++{
+    s=s+"\t"
+  }*/
+  
+  //fmt.Println(s,".",Raiz.Estado.fila1,Raiz.Estado.fila2,"fuu",Raiz.Estado.heuristica)
+  fmt.Println(Raiz.Estado.fila1,Raiz.Estado.fila2,"fuu",Raiz.Estado.heuristica)
+  
+  
+  if(Raiz.Estado.heuristica!=0){   
+  v.Agregar(Raiz.Estado)  
   Ordenados:=Raiz.Estado.Ordenar(Raiz.Estado.posiblesEstados())
-  //Ordenados:=Raiz.Estado.posiblesEstados()
-  for i:=0;i<len(Ordenados);i++{        
-    if(!v.Buscar(Ordenados[i])){      
-      Raiz.addChild(Ordenados[i])      
-      v.Agregar(Ordenados[i])     
-      if(Ordenados[i].heuristica==0){ 
-	fmt.Println(Ordenados[i].fila1,Ordenados[i].fila2,"fuu",Ordenados[i].heuristica);
-	fmt.Println(":) suerte") 
-	return true;	
+  
+  for i:=0;i<len(Ordenados);i++{     
+      if(!v.Buscar(Ordenados[i])){
+	
+	Raiz.addChild(Ordenados[i])      	
+	//fmt.Println("->",len(Raiz.Hijos))
+	temp:=len(Raiz.Hijos)-1
+	if(Raiz.Hijos[temp].Nivel<=deep){
+	  b:=Raiz.Hijos[temp].AStar(v,deep)
+	  if(b){return b}
+	}
+	  
+	
+	
       }
-      fmt.Println(Ordenados[i].fila1,Ordenados[i].fila2,"fuu",Ordenados[i].heuristica);
-    }else{
-      
-    }
   }
-  var bandera bool
-  for i:=0;i<len(Raiz.Hijos);i++{
+   
+    
+  /*for i:=0;i<len(Raiz.Hijos);i++{    
     if(Raiz.Hijos[i].Nivel<=deep){
-     bandera=Raiz.Hijos[i].AStar(v,deep)
-     if(bandera==true){
-       return true
-    }
-    }
-  }
-  //fmt.Println(":/",Ordenados)
+       b:=Raiz.Hijos[i].AStar(v,deep)     
+       if(b){
+         return b       
+        }
+      }    
+    }*/  
+ 
   }else{
     return true
   }
+  
   return false
 }
 
@@ -401,19 +413,19 @@ func main(){
   var Raiz Nodo
   var EV EstadosVisitados
     
-  prueba.Init2()
+  prueba.Init()
   prueba.tipoHeuristica=1
   prueba.HeuristicaJuego()
   
   Raiz.Estado=prueba
   Raiz.Nivel=0
   Raiz.Hijos=nil
-  EV.Agregar(prueba)
+  //EV.Agregar(prueba)
   
   //fmt.Println("firl",len(EV.ERecorridos))
   
-  Raiz.AStar(&EV,10)
+  Raiz.AStar(&EV,12)
   
-  fmt.Println("--->>",len(Raiz.Hijos))  
+  fmt.Println(" Hijos del nodo raiz",len(Raiz.Hijos))  
 }
 
