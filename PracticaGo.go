@@ -17,6 +17,7 @@ type Juego struct {
   tipoHeuristica int
   
   heuristica int
+  g int
 }
 
 func (this *Juego)Init(){
@@ -66,8 +67,8 @@ func (this *Juego)Init2(){
   this.fila1Objetivo[l]=-1
   rand.Seed(time.Now().UTC().UnixNano())
   //vector:=make([]int,12,12)    
-  f1:=[4]int{9,10,11,4}
-  f2:=[8]int{1,2,3,-1,5,6,7,8}
+  f1:=[4]int{9,10,11,8}
+  f2:=[8]int{1,2,3,4,5,6,-1,7}
   this.fila1=f1;
   this.fila2=f2;
   fmt.Println("Circulo 1",this.fila1)
@@ -205,7 +206,7 @@ func (this *Juego) posiblesEstados()[]Juego{
       var newState Juego;      
       var pf,rf int;
       for i:=0;i<len(valores);i++{	
-      newState=Juego{this.fila1Objetivo,this.fila2Objetivo,this.fila1,this.fila2,this.tipoHeuristica,this.heuristica};      
+      newState=Juego{this.fila1Objetivo,this.fila2Objetivo,this.fila1,this.fila2,this.tipoHeuristica,this.heuristica,0};      
       
       if(i>=2){
 	rf=-r+3
@@ -282,7 +283,7 @@ func (this *Juego) Ordenar(a []Juego)[]Juego{
     //fmt.Println("holal",pivote)
     //j:=0; k:=0
     for i:=1;i<len(a);i++{
-      if(pivote.heuristica>=a[i].heuristica){
+      if(pivote.heuristica+pivote.g>=a[i].heuristica+a[i].g){
 	a1=append(a1,a[i])
 	//a1[j]=a[i]
 	//j++
@@ -333,93 +334,158 @@ func (this *Nodo) addChild(estado Juego)bool{
   return true
 }
 
-func (Raiz *Nodo)AStar(v *EstadosVisitados,deep int)(bool, []Juego){  
-  
-  /*s:="\t";
-  for ni:=0;ni<Raiz.Nivel;ni++{
-    s=s+"\t"
-  }*/
-  
-  //fmt.Println(s,".",Raiz.Estado.fila1,Raiz.Estado.fila2,"fuu",Raiz.Estado.heuristica)
-  //fmt.Println(Raiz.Estado.fila1,Raiz.Estado.fila2,"fuu",Raiz.Estado.heuristica)
-  
-  
-  if(Raiz.Estado.heuristica!=0){   
-  v.Agregar(Raiz.Estado)  
-  Ordenados:=Raiz.Estado.Ordenar(Raiz.Estado.posiblesEstados())
-  
-  for i:=0;i<len(Ordenados);i++{     
-      if(!v.Buscar(Ordenados[i])){
-	
-	Raiz.addChild(Ordenados[i])      	
-	//fmt.Println("->",len(Raiz.Hijos))
-	temp:=len(Raiz.Hijos)-1
-	if(Raiz.Hijos[temp].Nivel<=deep){
-	  b,res:=Raiz.Hijos[temp].AStar(v,deep)
-	  if(b){
-	    t:=make([]Juego,1,1)
-	    t[0]=Raiz.Hijos[temp].Estado
-	    res=append(t,res...)
-	    return b,res	    
-	  }
-	}
-	  
-	
-	
-      }
-  }
-   
-    
-  /*for i:=0;i<len(Raiz.Hijos);i++{    
-    if(Raiz.Hijos[i].Nivel<=deep){
-       b:=Raiz.Hijos[i].AStar(v,deep)     
-       if(b){
-         return b       
-        }
-      }    
-    }*/  
- 
-  }else{
-    t:=make([]Juego,1,1)
-    t[0]=Raiz.Estado
-    return true,t
-  }
-  t:=make([]Juego,1,1)
-  return false,t
-}
 
-type EstadosVisitados struct{
-  ERecorridos []Juego  
-}
 
-func (this *EstadosVisitados)Buscar(Estado Juego)bool{    
+func Buscar(Estado Juego, Lista []Juego)(bool,int){    
   var i int
-  for i=0;i<len(this.ERecorridos);i++{    
-    temp:=this.ERecorridos[i];
+  for i=0;i<len(Lista);i++{    
+    temp:=Lista[i];
     
     v:=temp.fila1==Estado.fila1
     v1:=temp.fila2==Estado.fila2
     if(v&&v1){
-	return true
+	return true,i
+    }  
+  }
+  return false,-1
+}
+
+
+
+func Ordenar(a []Juego)[]Juego{
+    var a1 []Juego=make([]Juego,0,1)
+    var a2 []Juego=make([]Juego,0,1)
+    var res []Juego=make([]Juego,0,1)
+    var pivote Juego
+    if(len(a)>1){    
+    pivote=a[0];
+    //fmt.Println("holal",pivote)
+    //j:=0; k:=0
+    for i:=1;i<len(a);i++{
+      if(pivote.heuristica>=a[i].heuristica){
+	a1=append(a1,a[i])
+	//a1[j]=a[i]
+	//j++
+      }else{
+	a2=append(a2,a[i])
+	//a2[k]=a[i]
+	//k++
+      }
+    }    
+    
+    a1o:=Ordenar(a1)
+    a2o:=Ordenar(a2)
+    
+    res=append(a1o,pivote)
+    res=append(res,a2o...)
+    }else{      
+      if(len(a)==1){
+	res=append(res,a[0])
+      }
+    }
+    return res  
+}
+
+func menor(a []Juego)Juego{
+  var temp Juego
+  if(len(a)>0){    
+    temp=a[0]
+  for i:=1;i<len(a);i++{
+    if(temp.heuristica+temp.g>a[i].heuristica+a[i].g){
+      temp=a[i]
+    }
+  }
+  }
+  return temp
+}
+
+func AStar (Inicial Juego,deep int)(bool, []Juego){  
+  Pila:=make([]Juego,0,1)
+  Pila=append(Pila,Inicial)
+  Recorridos:=make([]Juego,0,1)
+  lista:=make(map[Juego]Juego)
+  g:=0
+  
+  var inmap Juego
+  
+  Inicial.g=0
+  for len(Pila)>0{    
+    
+    //temp:=Ordenar(Pila)[0]    
+    temp:=menor(Pila)
+    _,indice:=Buscar(temp,Pila)    
+    
+    if(temp.heuristica==0){
+      //fmt.Println(">>soy yo>",temp.fila1,temp.fila2,g)
+      
+      //fmt.Println("-->",inmap)
+      
+      te:=recontruir(lista,temp)
+      te=append(te,inmap)
+      
+      for i:=0;i<len(te);i++{
+	fmt.Println(te[i].fila1,te[i].fila2,te[i].heuristica)
+      }
+      
+      
+      return true,te
     }
     
+    Pila=append(Pila[:indice],Pila[indice+1:]...)//quitar de la pila
     
+    Recorridos=append(Recorridos,temp) //agregar a recorridos
     
+    hijos:=temp.Ordenar(temp.posiblesEstados())// ordena los posibles estados (hijos)
+    for i:=0;i<len(hijos);i++{
+      b,_:=Buscar(hijos[i],Recorridos)// Buscar en recorridos si esta se lo salta 
+      if(b){
+	continue
+      }
+      //g_tentativo:=temp.g+abs(hijos[i].heuristica-temp.heuristica) //calcula un G para el siguiengte hijo   
+      
+      g_tentativo:=temp.g+1
+      
+      b1,_:=Buscar(hijos[i],Pila)// busca si ya esta en la Pila 
+      
+      if(!b1 || g_tentativo<hijos[i].g){
+	if(!b1){
+	  
+	  Pila=append(Pila,hijos[i])	  
+	 
+	}
+	//hijos[i].g=g_tentativo	
+	
+	lista[hijos[i]]=temp	
+	if(hijos[i].heuristica==0){
+	 inmap=hijos[i] 
+	 
+	}
+	
+      }      
+    }
+    g++;
   }
-  return false
-}
-  
-func (this *EstadosVisitados)Agregar(Estado Juego){
-  
-  //fmt.Println("ERecorridos",len(this.ERecorridos),Estado)
-  this.ERecorridos=append(this.ERecorridos,Estado)
+  return false, make([]Juego,0,0)
 }
 
+func recontruir(lista map[Juego]Juego,a Juego)[]Juego{
+  res:=make([]Juego,0,1)
+  
+  temp,b:=lista[a];  
+  if(b){
+  r1:=recontruir(lista,temp)
+  //fmt.Println("->",temp.fila1,temp.fila2, temp.heuristica) 
+  return append(r1,temp)
+  
+  }
+  //fmt.Println("->",a.fila1,a.fila2,a.heuristica)
+  return res
+}
 
-func main(){
+/*func main(){
   var prueba Juego
   var Raiz Nodo
-  var EV EstadosVisitados
+  //var EV EstadosVisitados
     
   prueba.Init()
   prueba.tipoHeuristica=1
@@ -432,13 +498,15 @@ func main(){
   
   //fmt.Println("firl",len(EV.ERecorridos))
   
-  _,c:=Raiz.AStar(&EV,12)
+  /*_,c:=Raiz.AStar(&EV,120)
   
   
   for i:=0;i<len(c);i++{
     fmt.Println(c[i].fila1,c[i].fila2,c[i].heuristica)
   }
+  
+  AStar(prueba,1500)
 
-  fmt.Println(" Hijos del nodo raiz",len(Raiz.Hijos))  
-}
+  //fmt.Println(" Hijos del nodo raiz",len(Raiz.Hijos))  
+}*/
 
