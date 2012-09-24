@@ -66,11 +66,17 @@ func (this *Juego)Init2(){
   }    
   this.fila1Objetivo[l]=-1
   rand.Seed(time.Now().UTC().UnixNano())
-  //vector:=make([]int,12,12)    
-  f1:=[4]int{9,10,11,8}
-  f2:=[8]int{1,2,3,4,5,6,-1,7}
-  this.fila1=f1;
-  this.fila2=f2;
+  //vector:=make([]int,12,12) 
+  
+  movimientos:=this.posiblesEstados()
+  
+  mov:=rand.Intn(len(movimientos))
+  
+  //f1:=[4]int{9,10,11,-1}
+  //f2:=[8]int{1,2,3,4,5,6,7,8}
+  this.fila1=movimientos[mov].fila1;
+  this.fila2=movimientos[mov].fila2;
+  
   fmt.Println("Circulo 1",this.fila1)
   fmt.Println("Circulo 2",this.fila2)
   
@@ -206,7 +212,7 @@ func (this *Juego) posiblesEstados()[]Juego{
       var newState Juego;      
       var pf,rf int;
       for i:=0;i<len(valores);i++{	
-      newState=Juego{this.fila1Objetivo,this.fila2Objetivo,this.fila1,this.fila2,this.tipoHeuristica,this.heuristica,0};      
+      newState=Juego{this.fila1Objetivo,this.fila2Objetivo,this.fila1,this.fila2,this.tipoHeuristica,this.heuristica,this.g};      
       
       if(i>=2){
 	rf=-r+3
@@ -228,6 +234,8 @@ func (this *Juego) posiblesEstados()[]Juego{
       }
       heut:=newState.heuristica-this.HeuristicaPieza(-1)-this.HeuristicaPieza(this.GetValor(rf,pf))+newState.HeuristicaPieza(-1)+newState.HeuristicaPieza(newState.GetValor(r,p))
       newState.heuristica=heut;
+      
+      //newState.g=newState.g+1
       //newState.HeuristicaJuego()
       //fmt.Println("H(t+1) ",heut)
       //fmt.Println("hola :)",newState.fila1,newState.fila2)
@@ -283,7 +291,7 @@ func (this *Juego) Ordenar(a []Juego)[]Juego{
     //fmt.Println("holal",pivote)
     //j:=0; k:=0
     for i:=1;i<len(a);i++{
-      if(pivote.heuristica+pivote.g>=a[i].heuristica+a[i].g){
+      if(pivote.heuristica>=a[i].heuristica){
 	a1=append(a1,a[i])
 	//a1[j]=a[i]
 	//j++
@@ -386,17 +394,19 @@ func Ordenar(a []Juego)[]Juego{
     return res  
 }
 
-func menor(a []Juego)Juego{
+func menor(a []Juego)(Juego,int){
   var temp Juego
+  indice:=0
   if(len(a)>0){    
     temp=a[0]
   for i:=1;i<len(a);i++{
-    if(temp.heuristica+temp.g>a[i].heuristica+a[i].g){
+    if(temp.heuristica>a[i].heuristica){
+      indice=i
       temp=a[i]
     }
   }
   }
-  return temp
+  return temp,indice
 }
 
 func AStar (Inicial Juego,deep int)(bool, []Juego){  
@@ -405,20 +415,15 @@ func AStar (Inicial Juego,deep int)(bool, []Juego){
   Recorridos:=make([]Juego,0,1)
   lista:=make(map[Juego]Juego)
   g:=0
-  
   var inmap Juego
   
   Inicial.g=0
   for len(Pila)>0{    
+    temp,indice:=menor(Pila)
+    //_,indice:=Buscar(temp,Pila)    
     
-    //temp:=Ordenar(Pila)[0]    
-    temp:=menor(Pila)
-    _,indice:=Buscar(temp,Pila)    
-    
-    if(temp.heuristica==0){
-      //fmt.Println(">>soy yo>",temp.fila1,temp.fila2,g)
-      
-      //fmt.Println("-->",inmap)
+    if(temp.heuristica==0){    
+      //fmt.Println("-->",lista)
       
       te:=recontruir(lista,temp)
       te=append(te,inmap)
@@ -427,7 +432,6 @@ func AStar (Inicial Juego,deep int)(bool, []Juego){
 	fmt.Println(te[i].fila1,te[i].fila2,te[i].heuristica)
       }
       
-      
       return true,te
     }
     
@@ -435,29 +439,37 @@ func AStar (Inicial Juego,deep int)(bool, []Juego){
     
     Recorridos=append(Recorridos,temp) //agregar a recorridos
     
+    if(temp.g>=deep){
+        //fmt.Println("Paso por acá")
+	continue
+      }
+    
     hijos:=temp.Ordenar(temp.posiblesEstados())// ordena los posibles estados (hijos)
     for i:=0;i<len(hijos);i++{
       b,_:=Buscar(hijos[i],Recorridos)// Buscar en recorridos si esta se lo salta 
       if(b){
 	continue
       }
-      //g_tentativo:=temp.g+abs(hijos[i].heuristica-temp.heuristica) //calcula un G para el siguiengte hijo   
+      //g_tentativo:=temp.g+abs(hijos[i].heuristica-temp.heuristica) //calcula un G para el siguiengte hijo
+      
+     
       
       g_tentativo:=temp.g+1
       
       b1,_:=Buscar(hijos[i],Pila)// busca si ya esta en la Pila 
       
-      if(!b1 || g_tentativo<hijos[i].g){
+      //if(!b1){
+      if(!b1 ||  g_tentativo<=hijos[i].g){
 	if(!b1){
-	  
+	  hijos[i].g=g_tentativo
 	  Pila=append(Pila,hijos[i])	  
 	 
 	}
-	//hijos[i].g=g_tentativo	
+	hijos[i].g=g_tentativo	
 	
 	lista[hijos[i]]=temp	
 	if(hijos[i].heuristica==0){
-	 inmap=hijos[i] 
+	inmap=hijos[i] 
 	 
 	}
 	

@@ -6,7 +6,7 @@ import(
   "github.com/mattn/go-gtk/glib"
   "github.com/mattn/go-gtk/gtk"
   "github.com/mattn/go-gtk/gdk"
-  
+   "strings"
   //"unsafe"
   //"path"
   //"github.com/mattn/go-gtk/gdkpixbuf"
@@ -18,30 +18,36 @@ func main(){
   
   Actual.Init()
   
+  var  heuristica int
+  
+  heuristica=1
   
   var r1 [4]int
   var r2 [8]int
   
+  Actual.fila1=Actual.fila1Objetivo
+  Actual.fila2=Actual.fila2Objetivo
+  
   r1=Actual.fila1Objetivo
   r2=Actual.fila2Objetivo
   
-  fmt.Println(r1,r2)
+  //fmt.Println(r1,r2)
   
   prueba=100
   //var menuitem *gtk.GtkMenuItem
   gtk.Init(nil)
   window:=gtk.Window(gtk.GTK_WINDOW_TOPLEVEL)
   window.SetPosition(gtk.GTK_WIN_POS_CENTER);
-  window.SetTitle("PRUEBA :)");
+  window.SetTitle(" A star");
   window.Connect("destroy",func(ctx *glib.CallbackContext){
       println("got destory!\n",ctx.Data().(string))
       gtk.MainQuit()
   },"foo")
   
-  vbox:=gtk.VBox(false,14)
+  vbox:=gtk.HBox(false,14)
   
-  menubar:=gtk.MenuBar()
-  vbox.PackStart(menubar,false,false,0)
+  //menubar:=gtk.MenuBar()
+  //vbox.PackStart(menubar,false,false,0)
  
   vpaned:=gtk.VPaned()
   vbox.Add(vpaned)
@@ -50,28 +56,54 @@ func main(){
   framebox:=gtk.HBox(false,14)  
 
   framebox1:=gtk.VBox(true,0)
-  frame1:=gtk.Frame("Otro ")      
+  frame1:=gtk.Frame("Rompecabezas ")      
   
   frame.Add(framebox)    
   frame1.Add(framebox1)
   
   drawingarea := gtk.DrawingArea()
   
+ 
+ 
   vpaned.Add(frame)
+  vpaned.Add(frame1)
+  
   
   button := gtk.ButtonWithLabel("Resolver")
   button2 := gtk.ButtonWithLabel("Desordenar")
+  button3:=gtk.ButtonWithLabel(" Nivel de Desorden")
   
+  
+  
+  frameHu:=gtk.VBox(true,2)  
+  
+  lheuristica:=gtk.Label("Heuristica")
+  comboBox:=gtk.ComboBoxEntryNewText()
+  comboBox.AppendText("Piezas Desordenadas")
+  comboBox.AppendText("Distancia entre Piezas")
+  
+  comboBox.Connect("changed",func(){
+    if(strings.EqualFold(comboBox.GetActiveText(),"Piezas Desordenadas")){
+      heuristica=2
+    }else{
+      heuristica=1
+    }
+  })
+  
+  
+  frameHu.Add(lheuristica)
+  frameHu.Add(comboBox)
+
   entry := gtk.Entry()
   
   framebox.Add(entry)
   
   framebox.Add(button)
+  framebox.Add(frameHu)
+  
   framebox.Add(button2)
-  
-  
-  vpaned.Add(frame1)
-  
+  framebox.Add(button3)
+
   //var gdkwin *gdk.GdkWindow
   var pixmap *gdk.GdkPixmap
   var gc *gdk.GdkGC
@@ -160,12 +192,24 @@ func main(){
   
     
   button.Clicked(func(){
-    prueba=prueba+1    
-    b,camino:=AStar(Actual,100)
+    //prueba=prueba+1    
+    vdeep:=entry.GetText()
+  
+    Actual.tipoHeuristica=heuristica
+    Actual.HeuristicaJuego()
+    
+    deep,err:=strconv.Atoi(vdeep)
+    if(err==nil){      
+      fmt.Println("",deep)
+    b,camino:=AStar(Actual,deep)
     if(b){
     for i:=0;i<len(camino);i++{
      r1=camino[i].fila1
      r2=camino[i].fila2
+    }
+    
+    }else{
+      fmt.Println("No encontro la solución")
     }
     }
   })
@@ -173,14 +217,24 @@ func main(){
   button2.Clicked(func(){
     
     Actual.Init()
-    Actual.tipoHeuristica=2
+    Actual.tipoHeuristica=heuristica
     Actual.HeuristicaJuego()
     
     r1=Actual.fila1
     r2=Actual.fila2
     
-    prueba=prueba+1    
-    fmt.Println("->",prueba)
+    //prueba=prueba+1    
+    //fmt.Println("->",prueba)
+  })
+  
+  button3.Clicked(func(){
+    
+    Actual.Init2()
+    Actual.tipoHeuristica=heuristica
+    Actual.HeuristicaJuego()
+    
+    r1=Actual.fila1
+    r2=Actual.fila2
   })
   
   drawingarea.SetEvents(int(gdk.GDK_POINTER_MOTION_MASK | gdk.GDK_POINTER_MOTION_HINT_MASK | gdk.GDK_BUTTON_PRESS_MASK))
