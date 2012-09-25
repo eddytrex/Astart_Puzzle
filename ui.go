@@ -260,6 +260,9 @@ func main(){
   
   button3.Clicked(func(){
     
+    Actual.fila1=r1
+    Actual.fila2=r2
+    
     Actual.Init2()
     Actual.tipoHeuristica=heuristica
     Actual.HeuristicaJuego()
